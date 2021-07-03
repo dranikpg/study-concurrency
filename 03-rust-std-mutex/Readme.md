@@ -1,6 +1,6 @@
 ## std::sync
 
-The rust standart library provies:
+The rust standard library provides:
 * Atomics
 * Once
 * Mutex
@@ -23,7 +23,7 @@ struct State<T> {
 }
 ```
 
-### How are mutexes implemented
+### How are mutexes implemented?
 
 [From a forum thread about internals](https://internals.rust-lang.org/t/standard-library-synchronization-primitives-and-undefined-behavior/8439)
 
@@ -56,7 +56,7 @@ How does a parking_lot mutex compare to std?
 * Supports eventual fairness so that the mutex is fair on average.
 * Optionally allows making the mutex fair by calling MutexGuard::unlock_fair.
 
-Contrary to std, a parking_lot mutex uses its memory address, because a locekd mutex cannot move in memory as we have a hanging mutex guard to it. **Why** does this not apply to std? This is still an open question.
+Contrary to std, a parking_lot mutex uses its memory address, because a locked mutex cannot move in memory as we have a hanging mutex guard to it. **Why** does this not apply to std? This is still an open question.
 
 [raw_mutex.rs on github](https://github.com/Amanieu/parking_lot/blob/master/src/raw_mutex.rs)
 
