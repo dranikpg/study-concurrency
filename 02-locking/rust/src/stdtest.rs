@@ -93,9 +93,7 @@ fn condvar() {
 fn channel() {
     let (sx, rx) = mpsc::sync_channel(0);
     spawn(move ||{
-        sx.send(11);
+        sx.send(11).unwrap();
     });
     assert_eq!(rx.recv().unwrap(), 11);
 }
-
-fn main() {}
