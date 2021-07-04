@@ -35,6 +35,7 @@ nasm_switch:
 nasm_init:
     ; rdi - stack base address
     ; rsi - func address
+    enter 0, 0
     mov rcx, rsp
     
     mov rsp, rdi
@@ -49,4 +50,5 @@ nasm_init:
     mov rax, rsp
 
     mov rsp, rcx
+    leave
     ret
