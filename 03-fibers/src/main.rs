@@ -1,8 +1,6 @@
 use std::rc::Rc;
-use std::cell::{Cell, RefCell, Ref};
+use std::cell::Cell;
 use std::collections::VecDeque;
-use crate::FiberState::Suspended;
-
 mod stack;
 
 #[derive(Copy, Clone)]
@@ -25,115 +23,89 @@ struct Executor {
     current: Option<Rc<Fiber>>
 }
 
-fn trampoline(args: (usize, usize)) -> ! {
-    let func_ptr: &dyn Fn() = unsafe {std::mem::transmute(args)};
-    func_ptr();
-    suspend(FiberState::Finished);
-    unreachable!();
-}
-
 impl Executor {
-    fn start(&mut self) {
-        self.run();
-    }
-
-    pub fn launch<T>(&mut self, f: T)
-        where T: Fn() + 'static {
-        let args = unsafe {
-            let ptr: &dyn Fn() = &f;
-            std::mem::transmute(ptr)
-        };
-        let fiber = Rc::new(Fiber {
-            stack: stack::Stack::init(trampoline),
+    pub fn enqueue<T>(&mut self, f: T) 
+    where T: Fn() + 'static {
+        self.queue.push_back(Rc::new(Fiber {
+            stack: stack::Stack::init(Self::trampoline),
             state: Cell::new(FiberState::Suspended),
-            args
-        });
-        self.queue.push_back(fiber.clone());
-    }
-
-    fn suspend(&mut self, s: FiberState) {
-        match self.current {
-            Some(ref fiber) => {
-                fiber.state.set(s);
-                stack::Stack::switch(&fiber.stack, &self.stack, (0,0));
-            },
-            _ => unreachable!()
-        }
+            args: unsafe {std::mem::transmute(&f as &dyn Fn())}
+        }));
     }
 
     fn run(&mut self) {
-        loop {
-            let fiber: Option<Rc<Fiber>> = self.queue.pop_front();
-            match fiber {
-                Some(fiber) => {
-                    fiber.state.set(FiberState::Running);
-                    self.current = Some(fiber.clone());
-                    self.switch_to(&fiber);
-                    match fiber.state.get() {
-                        FiberState::Finished => continue,
-                        FiberState::Suspended => self.queue.push_back(fiber),
-                        _ => unreachable!()
-                    };
-                },
-                _ => break
-            }
+        while let Some(fiber) = self.queue.pop_front() {
+            self.current = Some(fiber.clone());
+            match self.switch_to(&fiber) {
+                FiberState::Finished => continue,
+                FiberState::Suspended => self.queue.push_back(fiber),
+                _ => unreachable!()
+            };
         }
     }
 
-    fn switch_to(&self, fiber: &Fiber) {
-        stack::Stack::switch(
-            &self.stack,
-            &fiber.stack,
-            fiber.args
-        );
+    fn trampoline(args: (usize, usize)) -> ! {
+        let func_ptr: &dyn Fn() = unsafe {std::mem::transmute(args)};
+        func_ptr();
+        unsafe {EXECUTOR.as_mut().unwrap().suspend(FiberState::Finished);}
+        unreachable!();
     }
-}
 
-static mut GE: Option<Executor> = None;
-
-fn suspend(s: FiberState) {
-    unsafe {
-        match GE {
-            Some(ref mut g) => {
-                g.suspend(s)
-            },
-            _ => unreachable!()
+    fn suspend(&mut self, s: FiberState) {
+        if let Some(ref fiber) = self.current {
+            fiber.state.set(s);
+            stack::Stack::switch(&fiber.stack, &self.stack, (0,0));
         }
+    }
+
+    fn switch_to(&self, fiber: &Fiber) -> FiberState {
+        fiber.state.set(FiberState::Running);
+        stack::Stack::switch(&self.stack, &fiber.stack, fiber.args);
+        fiber.state.get()
     }
 }
 
-fn launch<T>(f: T)
-    where T: Fn() + 'static {
-    unsafe {
-        match &mut GE {
-            Some(ref mut g) => {
-                g.launch(f)
-            },
-            _ => unreachable!()
-        }
-    };
+static mut EXECUTOR: Option<Executor> = None;
+
+fn suspend() {
+    unsafe {EXECUTOR.as_mut().unwrap().suspend(FiberState::Suspended); }
+}
+
+fn enqueue(f: impl Fn() + 'static) {
+    unsafe { EXECUTOR.as_mut().unwrap().enqueue(f); }
 }
 
 fn f2() {
-    println!("F2 part 1");
-    suspend(Suspended);
-    println!("F2 part 2");
-}
-fn f1(){
-    launch(f2);
-    println!("F1 - part 1");
-    suspend(Suspended);
-    println!("F1 - part 2");
-    suspend(Suspended);
-    println!("F1 - part 3");
+    println!(" 2 - 1");
+    suspend();
+    println!(" 2 -   2");
+    suspend();
+    println!(" 2 -     3");
 }
 
-fn main() {
+fn f1(){
+    println!("1  - 1");
+    enqueue(f2); 
+    suspend();    
+    println!("1  -   2");
+    suspend();
+    println!("1  -     3");
+}
+
+/* The example prints:
+1  - 1
+ 2 - 1
+1  -   2
+ 2 -   2
+1  -     3
+ 2 -     3
+*/
+
+fn main() { 
     unsafe {
-        GE = Some(Executor::default());
-        let mut g = GE.as_mut().unwrap();
-        g.launch(f1);
-        g.start();
-        GE = None;
+        EXECUTOR = Some(Executor::default());
+        enqueue(f1);
+        EXECUTOR.as_mut().unwrap().run();
+        EXECUTOR = None;
     }
 }
