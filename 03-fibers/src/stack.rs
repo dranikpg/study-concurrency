@@ -13,7 +13,6 @@ type FuncType = fn((usize, usize)) -> !;
 #[derive(Default)]
 pub struct Stack {
     mem: Option<Vec<u8>>,
-    bottom: usize,
     top: Cell<usize>
 }
 
@@ -25,7 +24,7 @@ impl Stack {
             ptr - (ptr % 16)
         };
         let top = Cell::new(Self::init_stack(bottom, f));
-        Stack { mem: Some(mem), bottom, top }
+        Stack { mem: Some(mem), top }
     }
 
     pub fn switch(from: &Stack, to: &Stack, (arg1, arg2): (usize, usize)) {
