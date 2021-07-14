@@ -156,3 +156,5 @@ fn trampoline(args: (usize, usize)) -> ! {
 ## Links
 
 * [ТиПМС, семинар 3. Файберы](https://youtu.be/OEY1StCZtpU)
+* [Folly fibers](https://github.com/facebook/folly/blob/master/folly/fibers/README.md)
+* [Fibers tutorial](https://graphitemaster.github.io/fibers)
