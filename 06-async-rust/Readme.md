@@ -3,4 +3,5 @@
 ## Links
 
 * [Rust async book](https://rust-lang.github.io/async-book)
-* [Pin and suffering](https://fasterthanli.me/articles/pin-and-suffering)
+* [Rust futures (fasterthanli)](https://fasterthanli.me/articles/understanding-rust-futures-by-going-way-too-deep)
+* [Pin and suffering (fasterthanli)](https://fasterthanli.me/articles/pin-and-suffering)
