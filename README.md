@@ -10,4 +10,4 @@ The fourth part is about the GO scheduler (TODO)
 
 [The fifth part](https://github.com/dranikpg/study-concurrency/tree/main/05-async-cpp) explores C++ async by implementing a custom runtime with timer futures based on effective wakeups
 
-[The sixth parth](https://github.com/dranikpg/study-concurrency/tree/main/06-async-rust) Rust version of the fifth part
+[The sixth part](https://github.com/dranikpg/study-concurrency/tree/main/06-async-rust) is a Rust version of the fifth part
